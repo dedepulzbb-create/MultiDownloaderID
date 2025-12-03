@@ -17,14 +17,13 @@ jobs:
     - name: Checkout Repo
       uses: actions/checkout@v4
 
-    # ---------------- SYSTEM REPO FIX ----------------
+    # ---------- SYSTEM DEPENDENCIES ----------
     - name: Enable Universe Repo
       run: |
         sudo add-apt-repository -y universe
         sudo apt-get update
 
-    # ---------------- DEPENDENCIES FIX ----------------
-    - name: Install System Dependencies (Ubuntu 24.04 FIX)
+    - name: Install System Dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends \
@@ -38,18 +37,18 @@ jobs:
           autoconf libtool cmake \
           libncurses5-dev
 
-    # ---------------- PYTHON TOOLS ----------------
+    # ---------- PYTHON TOOLS ----------
     - name: Install Python Tools
       run: |
-        python3 -m pip install --upgrade pip wheel setuptools
+        python3 -m pip install --upgrade pip setuptools wheel
         python3 -m pip install --upgrade Cython
         python3 -m pip install --user buildozer
 
     - name: Add pip user bin to PATH
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    # ---------------- ANDROID SDK INSTALL (FIX TOTAL) ----------------
-    - name: Install Android Command Line Tools
+    # ---------- ANDROID SDK FIX FINAL ----------
+    - name: Install Android Command Line Tools (NO mv ERROR)
       run: |
         mkdir -p "$ANDROID_SDK_ROOT"
         cd "$ANDROID_SDK_ROOT"
@@ -59,14 +58,19 @@ jobs:
         rm tools.zip
 
         mkdir -p cmdline-tools/latest
-        mv cmdline-tools/cmdline-tools/* cmdline-tools/latest/
 
-    # ✅ FIX sdkmanager NOT FOUND (PAKAI PATH ABSOLUT)
-    - name: Accept Android SDK Licenses (FIXED)
+        # ✅ FIX otomatis semua kemungkinan struktur
+        if [ -d "cmdline-tools/bin" ]; then
+          mv cmdline-tools/* cmdline-tools/latest/
+        else
+          mv cmdline-tools cmdline-tools/latest
+        fi
+
+    - name: Accept Android SDK Licenses
       run: |
         yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
-    - name: Install Android SDK Components (FIXED)
+    - name: Install Android SDK Components
       run: |
         $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
           "platform-tools" \
@@ -74,7 +78,7 @@ jobs:
           "build-tools;33.0.2" \
           "ndk;23.1.7779620"
 
-    # ---------------- BUILD APK ----------------
+    # ---------- BUILD APK ----------
     - name: Build APK
       env:
         PATH: $HOME/.local/bin:$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH
@@ -84,7 +88,7 @@ jobs:
         buildozer android clean
         buildozer android debug
 
-    # ---------------- UPLOAD APK ----------------
+    # ---------- UPLOAD APK ----------
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
