@@ -24,7 +24,7 @@ jobs:
         sudo add-apt-repository -y universe
         sudo apt-get update
 
-    - name: Install System Dependencies (Ubuntu 24.04 FIX)
+    - name: Install System Dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends \
@@ -49,30 +49,26 @@ jobs:
     - name: Add pip user bin to PATH
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    # ================= ANDROID SDK (AUTO FIX TOTAL) =================
+    # ================= ANDROID SDK (FIX 100%) =================
 
-    - name: Install Android Command Line Tools (AUTO FIX)
+    - name: Install Android SDK (SAFE MODE)
       run: |
         rm -rf "$ANDROID_SDK_ROOT"
-        mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+        mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools/latest"
         cd "$ANDROID_SDK_ROOT"
 
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
-        unzip -q tools.zip
+        unzip -q tools.zip -d temp
         rm tools.zip
 
-        # NORMALISASI STRUKTUR (ANTI ERROR latest/latest)
-        if [ -d "cmdline-tools/cmdline-tools" ]; then
-          mv cmdline-tools/cmdline-tools cmdline-tools/latest
-        else
-          mv cmdline-tools cmdline-tools/latest
-        fi
+        cp -r temp/cmdline-tools/* cmdline-tools/latest/
+        rm -rf temp
 
-    - name: Accept Android SDK Licenses
+    - name: Accept Android Licenses
       run: |
         yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
 
-    - name: Install Android SDK Components
+    - name: Install Android SDK Packages
       run: |
         $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
           "platform-tools" \
@@ -82,7 +78,7 @@ jobs:
 
     # ================= BUILD APK =================
 
-    - name: Build APK with Buildozer
+    - name: Build APK
       env:
         PATH: $HOME/.local/bin:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
         JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
