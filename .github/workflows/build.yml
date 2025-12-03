@@ -17,16 +17,11 @@ jobs:
     - name: Checkout Repo
       uses: actions/checkout@v4
 
-    # ---------- SYSTEM DEPENDENCIES ----------
-    - name: Enable Universe Repo
-      run: |
-        sudo add-apt-repository -y universe
-        sudo apt-get update
-
+    # ---------------- SYSTEM ----------------
     - name: Install System Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y --no-install-recommends \
+        sudo apt-get install -y \
           git zip unzip wget curl \
           build-essential \
           openjdk-17-jdk \
@@ -37,7 +32,7 @@ jobs:
           autoconf libtool cmake \
           libncurses5-dev
 
-    # ---------- PYTHON TOOLS ----------
+    # ---------------- PYTHON ----------------
     - name: Install Python Tools
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
@@ -47,24 +42,19 @@ jobs:
     - name: Add pip user bin to PATH
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    # ---------- ANDROID SDK FIX FINAL ----------
-    - name: Install Android Command Line Tools (NO mv ERROR)
+    # ---------------- ANDROID SDK (ANTI ERROR) ----------------
+    - name: Install Android Command Line Tools (SAFE MODE)
       run: |
-        mkdir -p "$ANDROID_SDK_ROOT"
+        rm -rf "$ANDROID_SDK_ROOT"
+        mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools/latest"
         cd "$ANDROID_SDK_ROOT"
 
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
         unzip -q tools.zip
-        rm tools.zip
 
-        mkdir -p cmdline-tools/latest
-
-        # ✅ FIX otomatis semua kemungkinan struktur
-        if [ -d "cmdline-tools/bin" ]; then
-          mv cmdline-tools/* cmdline-tools/latest/
-        else
-          mv cmdline-tools cmdline-tools/latest
-        fi
+        # ✅ PINDAH ISI TANPA MENABRAK FOLDER
+        cp -r cmdline-tools/* cmdline-tools/latest/ || true
+        rm -rf cmdline-tools tools.zip
 
     - name: Accept Android SDK Licenses
       run: |
@@ -78,7 +68,7 @@ jobs:
           "build-tools;33.0.2" \
           "ndk;23.1.7779620"
 
-    # ---------- BUILD APK ----------
+    # ---------------- BUILD APK ----------------
     - name: Build APK
       env:
         PATH: $HOME/.local/bin:$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH
@@ -88,7 +78,7 @@ jobs:
         buildozer android clean
         buildozer android debug
 
-    # ---------- UPLOAD APK ----------
+    # ---------------- UPLOAD APK ----------------
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
