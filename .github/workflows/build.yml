@@ -33,7 +33,7 @@ jobs:
     - name: Install Python & Buildozer
       run: |
         python3 -m pip install --upgrade pip wheel setuptools cython
-        python3 -m pip install --user buildozer
+        python3 -m pip install --user buildozer python-for-android
 
     - name: Add pip user bin to PATH
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
@@ -42,7 +42,6 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    # ✅ INSTALL SDK + BUILD TOOLS 36 + ACCEPT LICENSE
     - name: Install Android SDK Packages + Accept License
       run: |
         yes | sdkmanager --licenses
@@ -53,21 +52,18 @@ jobs:
           "build-tools;36.0.0" \
           "ndk;23.1.7779620"
 
-    # ================= FULL RESET CACHE =================
-    - name: Reset Buildozer & Gradle Cache
+    # ================= CLEAN CACHE =================
+    - name: Reset Cache
       run: |
         rm -rf ~/.buildozer
         rm -rf .buildozer
-        rm -rf ~/.gradle
-        rm -rf .gradle
 
-    # ================= BUILD APK =================
+    # ================= BUILD APK (TANPA CLEAN) =================
     - name: Build APK
       env:
         JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
       run: |
         buildozer --version
-        buildozer android clean
         buildozer android debug
 
     # ================= UPLOAD APK =================
