@@ -38,19 +38,22 @@ jobs:
     - name: Add pip user bin to PATH
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    # ================= ANDROID SDK RESMI (AMAN + STABIL) =================
-    - name: Setup Android SDK (Official)
+    # ================= ANDROID SDK =================
+    - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Install Android SDK Packages
+    # ✅ INSTALL SDK + BUILD TOOLS 36 + ACCEPT LICENSE
+    - name: Install Android SDK Packages + Accept License
       run: |
+        yes | sdkmanager --licenses
         sdkmanager --install \
           "platform-tools" \
           "platforms;android-33" \
           "build-tools;33.0.2" \
+          "build-tools;36.0.0" \
           "ndk;23.1.7779620"
 
-    # ================= RESET TOTAL CACHE (FIX ERROR p4a) =================
+    # ================= FULL RESET CACHE =================
     - name: Reset Buildozer & Gradle Cache
       run: |
         rm -rf ~/.buildozer
@@ -58,16 +61,13 @@ jobs:
         rm -rf ~/.gradle
         rm -rf .gradle
 
-    - name: Force Install Python-for-Android
-      run: |
-        buildozer android p4a || true
-
     # ================= BUILD APK =================
     - name: Build APK
       env:
         JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
       run: |
         buildozer --version
+        buildozer android clean
         buildozer android debug
 
     # ================= UPLOAD APK =================
