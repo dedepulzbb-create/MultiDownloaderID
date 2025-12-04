@@ -17,7 +17,7 @@ jobs:
     - name: Checkout Repo
       uses: actions/checkout@v4
 
-    # ================= SYSTEM DEPENDENCIES =================
+    # ================= SYSTEM =================
 
     - name: Enable Universe Repo
       run: |
@@ -38,7 +38,7 @@ jobs:
           autoconf libtool cmake \
           libncurses5-dev
 
-    # ================= PYTHON TOOLS =================
+    # ================= PYTHON =================
 
     - name: Install Python Tools
       run: |
@@ -48,23 +48,21 @@ jobs:
     - name: Add pip user bin to PATH
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    # ================= ANDROID SDK OFFICIAL INSTALL =================
+    # ================= ANDROID SDK (NO MV, NO ERROR) =================
 
-    - name: Install Android SDK (OFFICIAL)
+    - name: Install Android SDK SAFELY
       run: |
         rm -rf "$ANDROID_SDK_ROOT"
-        mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+        mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools/latest"
         cd "$ANDROID_SDK_ROOT"
 
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-        unzip -q commandlinetools-linux-9477386_latest.zip
-
-        mkdir -p cmdline-tools/latest
-        mv cmdline-tools/* cmdline-tools/latest/
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
+        unzip -q tools.zip -d cmdline-tools/latest
+        rm tools.zip
 
     - name: Set Android SDK Path
       run: |
-        echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
+        echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/cmdline-tools/bin" >> $GITHUB_PATH
         echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
 
     - name: Accept Android Licenses
@@ -79,7 +77,7 @@ jobs:
           "build-tools;33.0.2" \
           "ndk;23.1.7779620"
 
-    # ================= BUILD APK =================
+    # ================= BUILD =================
 
     - name: Build APK
       env:
@@ -89,7 +87,7 @@ jobs:
         buildozer android clean
         buildozer android debug
 
-    # ================= UPLOAD APK =================
+    # ================= UPLOAD =================
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
