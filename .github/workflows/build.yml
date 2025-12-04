@@ -29,7 +29,7 @@ jobs:
           autoconf libtool cmake \
           libncurses5-dev
 
-    # ================= PYTHON =================
+    # ================= PYTHON & BUILDOZER =================
     - name: Install Python & Buildozer
       run: |
         python3 -m pip install --upgrade pip wheel setuptools cython
@@ -38,8 +38,8 @@ jobs:
     - name: Add pip user bin to PATH
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    # ================= ANDROID SDK RESMI (TANPA ZIP, TANPA PATH ERROR) =================
-    - name: Setup Android SDK (OFFICIAL)
+    # ================= ANDROID SDK RESMI (AMAN + STABIL) =================
+    - name: Setup Android SDK (Official)
       uses: android-actions/setup-android@v3
 
     - name: Install Android SDK Packages
@@ -50,13 +50,24 @@ jobs:
           "build-tools;33.0.2" \
           "ndk;23.1.7779620"
 
+    # ================= RESET TOTAL CACHE (FIX ERROR p4a) =================
+    - name: Reset Buildozer & Gradle Cache
+      run: |
+        rm -rf ~/.buildozer
+        rm -rf .buildozer
+        rm -rf ~/.gradle
+        rm -rf .gradle
+
+    - name: Force Install Python-for-Android
+      run: |
+        buildozer android p4a || true
+
     # ================= BUILD APK =================
     - name: Build APK
       env:
         JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
       run: |
         buildozer --version
-        buildozer android clean
         buildozer android debug
 
     # ================= UPLOAD APK =================
