@@ -9,22 +9,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      ANDROID_SDK_ROOT: $HOME/android-sdk
-      ANDROID_HOME: $HOME/android-sdk
-
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
 
     # ================= SYSTEM =================
-    - name: Enable Universe Repo
-      run: |
-        sudo add-apt-repository -y universe
-        sudo apt-get update
-
     - name: Install System Dependencies
       run: |
+        sudo add-apt-repository -y universe
         sudo apt-get update
         sudo apt-get install -y \
           git zip unzip wget curl rsync \
@@ -38,7 +30,7 @@ jobs:
           libncurses5-dev
 
     # ================= PYTHON =================
-    - name: Install Python Tools
+    - name: Install Python & Buildozer
       run: |
         python3 -m pip install --upgrade pip wheel setuptools cython
         python3 -m pip install --user buildozer
@@ -46,38 +38,19 @@ jobs:
     - name: Add pip user bin to PATH
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    # ================= ANDROID SDK (FIX SUPER AMAN) =================
-    - name: Install Android SDK (FINAL FIX)
-      run: |
-        rm -rf "$ANDROID_SDK_ROOT"
-        mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools/latest"
-        cd "$ANDROID_SDK_ROOT"
-
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
-        unzip -q tools.zip -d temp
-        rm tools.zip
-
-        rsync -a temp/cmdline-tools/ cmdline-tools/latest/
-        rm -rf temp
-
-    - name: Set Android SDK Path
-      run: |
-        echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
-        echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
-
-    - name: Accept Android Licenses
-      run: |
-        yes | sdkmanager --licenses
+    # ================= ANDROID SDK RESMI (TANPA ZIP, TANPA PATH ERROR) =================
+    - name: Setup Android SDK (OFFICIAL)
+      uses: android-actions/setup-android@v3
 
     - name: Install Android SDK Packages
       run: |
-        sdkmanager \
+        sdkmanager --install \
           "platform-tools" \
           "platforms;android-33" \
           "build-tools;33.0.2" \
           "ndk;23.1.7779620"
 
-    # ================= BUILD =================
+    # ================= BUILD APK =================
     - name: Build APK
       env:
         JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
@@ -86,7 +59,7 @@ jobs:
         buildozer android clean
         buildozer android debug
 
-    # ================= UPLOAD =================
+    # ================= UPLOAD APK =================
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
