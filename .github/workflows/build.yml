@@ -1,4 +1,4 @@
-name: Build Kivy APK
+name: Build Kivy APK (PYTHON 3.10 LOCKED)
 
 on:
   push:
@@ -7,46 +7,60 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
-    # ================= CHECKOUT =================
     - name: Checkout Repo
       uses: actions/checkout@v4
 
-    # ================= SYSTEM =================
+    # ================= FORCE PYTHON 3.10 =================
+    - name: Setup Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+        architecture: "x64"
+
+    - name: Force System Python to 3.10
+      run: |
+        which python
+        which pip
+        python --version
+        sudo update-alternatives --install /usr/bin/python python /opt/hostedtoolcache/Python/3.10.*/x64/bin/python 1 || true
+        python --version
+
+    # ================= SYSTEM DEPENDENCIES =================
     - name: Install System Dependencies
       run: |
-        sudo add-apt-repository -y universe
-        sudo apt-get update
-        sudo apt-get install -y \
+        sudo apt update
+        sudo apt install -y \
           git zip unzip wget curl rsync \
           build-essential \
           openjdk-17-jdk \
-          python3 python3-pip python3-setuptools python3-wheel \
-          pkg-config zlib1g-dev libffi-dev libssl-dev \
+          pkg-config zlib1g-dev libc6-dev \
+          libffi-dev libssl-dev \
           libgl1-mesa-dev \
           libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
           autoconf libtool cmake \
           libncurses5-dev
 
     # ================= PYTHON TOOLS =================
-    - name: Install Build Tools (Buildozer + appdirs FIX)
+    - name: Install Python Build Tools
       run: |
-        python3 -m pip install --upgrade pip wheel setuptools
-        python3 -m pip install cython buildozer appdirs
+        python -m pip install --upgrade pip setuptools wheel
+        python -m pip install cython==0.29.36
+        python -m pip install buildozer python-for-android
 
-    - name: Add pip user bin to PATH
+    - name: Add pip bin to PATH
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     # ================= ANDROID SDK =================
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Accept All SDK Licenses
+    - name: Accept SDK Licenses
       run: yes | sdkmanager --licenses
 
-    - name: Install Android SDK Packages (STABLE)
+    - name: Install Android SDK Packages
       run: |
         sdkmanager --install \
           "platform-tools" \
@@ -54,20 +68,28 @@ jobs:
           "build-tools;33.0.2" \
           "ndk;23.1.7779620"
 
-    # ================= CLEAN OLD CACHE =================
-    - name: Clean Buildozer Cache
-      run: rm -rf ~/.buildozer
+    # ================= CLEAN TOTAL CACHE =================
+    - name: Clean Build Cache
+      run: |
+        rm -rf ~/.buildozer
+        rm -rf ~/.gradle
+        rm -rf .buildozer
+
+    # ================= INIT BUILD =================
+    - name: Init Buildozer Android
+      run: |
+        buildozer init || true
 
     # ================= BUILD APK =================
     - name: Build APK
       env:
         JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
-        ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         ANDROID_HOME: /usr/local/lib/android/sdk
+        ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       run: |
+        python --version
         buildozer --version
-        buildozer android clean
-        buildozer android debug
+        buildozer -v android debug
 
     # ================= UPLOAD APK =================
     - name: Upload APK
