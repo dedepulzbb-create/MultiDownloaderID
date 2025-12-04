@@ -29,7 +29,7 @@ jobs:
           autoconf libtool cmake \
           libncurses5-dev
 
-    # ================= PYTHON & BUILDOZER =================
+    # ================= PYTHON =================
     - name: Install Python & Buildozer
       run: |
         python3 -m pip install --upgrade pip wheel setuptools cython
@@ -38,34 +38,30 @@ jobs:
     - name: Add pip user bin to PATH
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    # ================= ANDROID SDK =================
+    # ================= ANDROID SDK RESMI =================
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    # ✅ PAKSA TERIMA LICENSE + INSTALL BUILD TOOLS STABIL
-    - name: Install Android SDK Packages (FIXED)
+    # ✅ INI STEP PALING PENTING (FIX LICENSE + AIDL)
+    - name: Accept Android SDK Licenses
+      run: yes | sdkmanager --licenses
+
+    - name: Install Android SDK Packages (FORCE 33 ONLY)
       run: |
-        yes | sdkmanager --licenses
+        sdkmanager --uninstall "build-tools;36.1.0" || true
         sdkmanager --install \
           "platform-tools" \
           "platforms;android-33" \
           "build-tools;33.0.2" \
           "ndk;23.1.7779620"
 
-    # ================= RESET CACHE =================
-    - name: Reset Build Cache
-      run: |
-        rm -rf ~/.buildozer
-        rm -rf .buildozer
-
     # ================= BUILD APK =================
     - name: Build APK
       env:
         JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
-        ANDROID_HOME: /usr/local/lib/android/sdk
-        ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       run: |
         buildozer --version
+        buildozer android clean
         buildozer android debug
 
     # ================= UPLOAD APK =================
