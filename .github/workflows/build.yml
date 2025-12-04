@@ -42,26 +42,28 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Install Android SDK Packages + Accept License
+    # ✅ PAKSA TERIMA LICENSE + INSTALL BUILD TOOLS STABIL
+    - name: Install Android SDK Packages (FIXED)
       run: |
         yes | sdkmanager --licenses
         sdkmanager --install \
           "platform-tools" \
           "platforms;android-33" \
           "build-tools;33.0.2" \
-          "build-tools;36.0.0" \
           "ndk;23.1.7779620"
 
-    # ================= CLEAN CACHE =================
-    - name: Reset Cache
+    # ================= RESET CACHE =================
+    - name: Reset Build Cache
       run: |
         rm -rf ~/.buildozer
         rm -rf .buildozer
 
-    # ================= BUILD APK (TANPA CLEAN) =================
+    # ================= BUILD APK =================
     - name: Build APK
       env:
         JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+        ANDROID_HOME: /usr/local/lib/android/sdk
+        ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       run: |
         buildozer --version
         buildozer android debug
