@@ -13,6 +13,12 @@ jobs:
     - name: Checkout Repo
       uses: actions/checkout@v4
 
+    # ================= FORCE PYTHON 3.10 =================
+    - name: Setup Python 3.10 (WAJIB)
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
     # ================= SYSTEM =================
     - name: Install System Dependencies
       run: |
@@ -29,24 +35,22 @@ jobs:
           autoconf libtool cmake \
           libncurses5-dev
 
-    # ================= PYTHON =================
-    - name: Install Python & Buildozer
+    # ================= PYTHON BUILD TOOLS =================
+    - name: Install Buildozer & python-for-android
       run: |
-        python3 -m pip install --upgrade pip wheel setuptools cython
-        python3 -m pip install --user buildozer python-for-android
+        python -m pip install --upgrade pip wheel setuptools
+        python -m pip install cython
+        python -m pip install buildozer
+        python -m pip install git+https://github.com/kivy/python-for-android.git
 
-    - name: Add pip user bin to PATH
-      run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-    # ================= ANDROID SDK RESMI =================
+    # ================= ANDROID SDK =================
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    # ✅ INI STEP PALING PENTING (FIX LICENSE + AIDL)
     - name: Accept Android SDK Licenses
       run: yes | sdkmanager --licenses
 
-    - name: Install Android SDK Packages (FORCE 33 ONLY)
+    - name: Install Android SDK Packages (STABLE)
       run: |
         sdkmanager --uninstall "build-tools;36.1.0" || true
         sdkmanager --install \
